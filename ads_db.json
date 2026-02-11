@@ -3,17 +3,13 @@
   "approved": [
     {
       "id": 1,
-      "title": "привет",
+      "title": "jjjj",
       "price": 123,
       "seller": "Manager?",
       "user_id": 7431837292,
       "status": "approved",
-      "created_at": "2026-02-11T19:19:42.324335"
+      "created_at": "2026-02-11T19:51:41.666954"
     }
   ],
-  "updated": "2026-02-11T19:19:45.689722",
-  "stats": {
-    "pending_count": 0,
-    "approved_count": 1
-  }
+  "updated": "2026-02-11T19:51:48.464757"
 }
