@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 services:
   - type: web
     name: autostoyanka-api
@@ -7,3 +8,14 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
+=======
+services:
+  - type: web
+    name: autostoyanka-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+>>>>>>> 6331cb30e4cb86c3ccf0bae065635da8ca1d7027

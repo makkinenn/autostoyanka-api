@@ -1,5 +1,13 @@
+<<<<<<< HEAD
 aiogram==3.13.1
 python-dotenv==1.0.1
 fastapi==0.115.0
 uvicorn[standard]==0.32.0
 
+=======
+aiogram==3.13.1
+python-dotenv==1.0.1
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+
+>>>>>>> 6331cb30e4cb86c3ccf0bae065635da8ca1d7027
