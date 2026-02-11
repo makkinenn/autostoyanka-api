@@ -11,22 +11,40 @@ from dotenv import load_dotenv
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from datetime import datetime
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-load_dotenv()
-print("🚀 АвтоСтоянка • LIVE КАТАЛОГ + EXPORT • ФИНАЛЬНАЯ ВЕРСИЯ")
+# 🔥 FASTAPI API (ДЛЯ RENDER) - ПЕРВЫЕ СТРОКИ!
+app = FastAPI(title="🚗 АвтоСтоянка API")
 
-# Состояния
-class SellForm(StatesGroup):
-    title = State()
-    price = State()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-class AdminComment(StatesGroup):
-    waiting_comment = State()
+@app.get("/")
+async def root():
+    return {"message": "🚗 АвтоСтоянка API LIVE!"}
 
-class UserEdit(StatesGroup):
-    waiting_edit = State()
+@app.get("/api/ads")
+async def get_ads():
+    """🔥 ГЛАВНЫЙ ENDPOINT ДЛЯ MINI APP"""
+    try:
+        pending, approved = load_ads_db()
+        return {
+            "ads": approved,
+            "pending_count": len(pending),
+            "approved_count": len(approved),
+            "live": True,
+            "updated": datetime.now().isoformat()
+        }
+    except Exception as e:
+        return {"error": str(e), "ads": []}
 
-# 🔥 ГЛАВНАЯ БД
+# 🔥 БД ФУНКЦИИ (двигаем ВВЕРХ)
 ADS_DB = "ads_db.json"
 current_comment_ad_id = None
 current_edit_ad_id = None
@@ -44,11 +62,9 @@ def load_ads_db():
     return {}, []
 
 def save_ads_db(pending, approved):
-    """🔥 LIVE UPDATE - ГАРАНТИЯ для Mini App"""
+    """🔥 LIVE UPDATE"""
     try:
         os.makedirs("webapp", exist_ok=True)
-        
-        # 🔥 1. ОСНОВНАЯ БД
         db_data = {
             'pending': pending,
             'approved': approved,
@@ -60,40 +76,23 @@ def save_ads_db(pending, approved):
         }
         with open(ADS_DB, 'w', encoding='utf-8') as f:
             json.dump(db_data, f, ensure_ascii=False, indent=2)
-        
-        # 🔥 2. MINI APP ФАЙЛ (локально)
-        catalog_data = {
-            'ads': approved,
-            'updated': datetime.now().isoformat(),
-            'live': True,
-            'total': len(approved)
-        }
-        with open('ads.json', 'w', encoding='utf-8') as f:
-            json.dump(catalog_data, f, ensure_ascii=False, indent=2)
-        
-        print(f"🎉 LIVE UPDATE: {len(approved)} объявлений в ads.json!")
-        
+        print(f"🎉 LIVE UPDATE: {len(approved)} объявлений!")
     except Exception as e:
         print(f"❌ ОШИБКА сохранения: {e}")
 
-# 🔥 EXPORT для Netlify (НОВОЕ!)
-async def export_catalog():
-    """📤 Автообновление export_ads.json каждые 30 сек"""
-    while True:
-        try:
-            pending, approved = load_ads_db()
-            catalog_data = {
-                'ads': approved,
-                'live': True,
-                'updated': datetime.now().isoformat(),
-                'total': len(approved)
-            }
-            with open('export_ads.json', 'w', encoding='utf-8') as f:
-                json.dump(catalog_data, f, ensure_ascii=False, indent=2)
-            print(f"📤 EXPORT: {len(approved)} в export_ads.json")
-        except Exception as e:
-            print(f"❌ Export error: {e}")
-        await asyncio.sleep(30)
+# 🔥 TELEGRAM BOT
+load_dotenv()
+print("🚀 АвтоСтоянка • LIVE КАТАЛОГ + EXPORT • ФИНАЛЬНАЯ ВЕРСИЯ")
+
+class SellForm(StatesGroup):
+    title = State()
+    price = State()
+
+class AdminComment(StatesGroup):
+    waiting_comment = State()
+
+class UserEdit(StatesGroup):
+    waiting_edit = State()
 
 def main_menu():
     builder = ReplyKeyboardBuilder()
@@ -121,7 +120,7 @@ def user_action_menu(ad_id: int) -> InlineKeyboardMarkup:
         ]
     ])
 
-# ИНИЦИАЛИЗАЦИЯ
+# ИНИЦИАЛИЗАЦИЯ BOT
 bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher()
 
@@ -174,7 +173,7 @@ async def get_title(message: Message, state: FSMContext):
 
 @dp.message(StateFilter(SellForm.price))
 async def get_price(message: Message, state: FSMContext):
-    clean_price = re.sub(r'[^\d]', '', message.text)
+    clean_price = re.sub(r'[^0-9]', '', message.text)
     try:
         price = int(clean_price)
         data = await state.get_data()
@@ -244,7 +243,7 @@ async def moderate_ad(callback: CallbackQuery):
         approved.append(approved_ad)
         del pending[ad_id]
         save_ads_db(pending, approved)
-        print(f"🎉 #{ad_id} ДОБАВЛЕН В КАТАЛОГ! export_ads.json обновится через 30с!")
+        print(f"🎉 #{ad_id} ДОБАВЛЕН В КАТАЛОГ!")
     
     status_emoji = "✅ ОДОБРЕНО" if is_approve else "❌ ОТКЛОНЕНО"
     
@@ -314,20 +313,16 @@ async def cancel_ad(callback: CallbackQuery):
 async def ignore(callback: CallbackQuery):
     await callback.answer()
 
-# 🔥 ОДНА И ЕДИНСТВЕННАЯ main() функция!
 async def main():
     print("🚀 Бот запущен!")
     print(f"👤 Админ: {ADMIN_ID}")
     print(f"📁 Корень: {os.getcwd()}")
     
-    # Создаем начальный пустой каталог
     save_ads_db({}, [])
-    
-    # 🔥 ЗАПУСКАЕМ EXPORT каждые 30 секунд
-    asyncio.create_task(export_catalog())
-    
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
+    # Render использует uvicorn main:app
+    # Локально запускаем бота
     asyncio.run(main())
