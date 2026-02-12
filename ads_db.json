@@ -18,7 +18,16 @@
       "user_id": 7431837292,
       "status": "approved",
       "created_at": "2026-02-12T21:41:25.365350"
+    },
+    {
+      "id": 3,
+      "title": "🛒 Купить",
+      "price": 19,
+      "seller": "Manager?",
+      "user_id": 7431837292,
+      "status": "approved",
+      "created_at": "2026-02-12T21:49:06.064052"
     }
   ],
-  "updated": "2026-02-12T21:41:28.919342"
+  "updated": "2026-02-12T21:49:08.862592"
 }
